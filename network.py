@@ -82,7 +82,7 @@ class GenNetwork(nn.Module):
 		EOSmet = []
 
 		next_emb = first_emb
-		gru_h = self.GRULayer.h_init
+		gru_h = self.GRULayer.getInitialParameter(batch_size)
 		for _ in range(self.args.max_sen_length):
 			now = next_emb
 			gru_h = self.GRULayer.cell_forward(now, gru_h)
