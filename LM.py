@@ -173,7 +173,7 @@ class LM(BaseModel):
 
 		dm.restart(key, args.batch_size, shuffle=False)
 		#metric2 = dm.get_inference_metric()
-		metric2 = LanguageGenerationRecorder(self, gen_key="gen")
+		metric2 = LanguageGenerationRecorder(dm, gen_key="gen")
 		while True:
 			incoming = self.get_next_batch(dm, key, restart=False)
 			if incoming is None:
