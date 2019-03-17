@@ -70,8 +70,8 @@ def run():
 	args.load_exclude_set = []
 	args.restoreCallback = None
 
-	#args.batch_per_epoch = 1500
-	args.batch_per_epoch = 10
+	args.batch_per_epoch = 1500
+	#args.batch_per_epoch = 10
 	args.embedding_size = 300
 	args.dh_size = 200
 	args.lr = 1e-3
