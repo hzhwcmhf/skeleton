@@ -4,7 +4,7 @@ import logging
 import torch
 from torch import nn
 
-from utils import zeros,\
+from utils import zeros, LongTensor\
 			BaseNetwork, MyGRU, Storage, gumbel_max, flattenSequence
 
 # pylint: disable=W0221
@@ -59,7 +59,7 @@ class GenNetwork(nn.Module):
 		self.args = args = param.args
 		self.param = param
 
-		self.GRULayer = MyGRU(args.embedding_size, args.dh_size, initpara=False)
+		self.GRULayer = MyGRU(args.embedding_size, args.dh_size)
 		self.wLinearLayer = nn.Linear(args.dh_size, param.volatile.dm.vocab_size)
 		self.lossCE = nn.CrossEntropyLoss(ignore_index=param.volatile.dm.unk_id)
 		self.start_generate_id = 2
@@ -67,7 +67,7 @@ class GenNetwork(nn.Module):
 	def teacherForcing(self, inp, gen):
 		embedding = inp.embedding
 		length = inp.sent_length
-		gen.h, _ = self.GRULayer.forward(embedding, length-1, h_init=inp.init_h, need_h=True)
+		gen.h, _ = self.GRULayer.forward(embedding, length-1, need_h=True)
 		gen.w = self.wLinearLayer(gen.h)
 
 	def freerun(self, inp, gen, mode='max'):
@@ -112,7 +112,6 @@ class GenNetwork(nn.Module):
 		inp = Storage()
 		inp.sent_length = incoming.data.sent_length
 		inp.embedding = incoming.sent.embedding
-		inp.init_h = incoming.conn.init_h
 
 		incoming.gen = gen = Storage()
 		self.teacherForcing(inp, gen)
@@ -125,7 +124,6 @@ class GenNetwork(nn.Module):
 	def detail_forward(self, incoming):
 		inp = Storage()
 		batch_size = inp.batch_size = incoming.data.batch_size
-		inp.init_h = incoming.conn.init_h
 
 		incoming.gen = gen = Storage()
 		self.freerun(inp, gen, 'gumbel')
