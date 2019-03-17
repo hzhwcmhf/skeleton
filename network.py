@@ -138,4 +138,4 @@ class GenNetwork(nn.Module):
 				for i in range(batch_size)]
 		incoming.result.show_str = "\n".join(["gen: " + b + "\n" + \
 				"golden: " + c + "\n" \
-				for a, b, c in zip(gen_str, golden_str)])
+				for b, c in zip(gen_str, golden_str)])
