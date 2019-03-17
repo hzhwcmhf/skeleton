@@ -12,11 +12,13 @@ class Network(BaseNetwork):
 	def __init__(self, param):
 		super().__init__(param)
 
+		self.embLayer = EmbeddingLayer(param)
 		self.genNetwork = GenNetwork(param)
 
 	def forward(self, incoming):
 		incoming.result = Storage()
 
+		self.embLayer.forward(incoming)
 		self.genNetwork.forward(incoming)
 
 		incoming.result.loss = incoming.result.word_loss
@@ -29,7 +31,27 @@ class Network(BaseNetwork):
 	def detail_forward(self, incoming):
 		incoming.result = Storage()
 
+		self.embLayer.forward(incoming)
 		self.genNetwork.detail_forward(incoming)
+
+class EmbeddingLayer(nn.Module):
+	def __init__(self, param):
+		super().__init__()
+		self.args = args = param.args
+		self.param = param
+		volatile = param.volatile
+
+		self.embLayer = nn.Embedding(volatile.dm.vocab_size, args.embedding_size)
+		self.embLayer.weight = nn.Parameter(torch.Tensor(volatile.wordvec))
+
+	def forward(self, incoming):
+		'''
+		inp: data
+		output: sent
+		'''
+		incoming.sent = Storage()
+		incoming.sent.embedding = self.embLayer(incoming.data.resp)
+		incoming.sent.embLayer = self.embLayer
 
 class GenNetwork(nn.Module):
 	def __init__(self, param):
@@ -37,7 +59,6 @@ class GenNetwork(nn.Module):
 		self.args = args = param.args
 		self.param = param
 
-		self.embWeight = nn.Parameter(torch.Tensor(param.volatile.wordvec))
 		self.GRULayer = MyGRU(args.embedding_size, args.dh_size, initpara=False)
 		self.wLinearLayer = nn.Linear(args.dh_size, param.volatile.dm.vocab_size)
 		self.lossCE = nn.CrossEntropyLoss(ignore_index=param.volatile.dm.unk_id)
@@ -53,7 +74,7 @@ class GenNetwork(nn.Module):
 		batch_size = inp.batch_size
 		dm = self.param.volatile.dm
 
-		first_emb = inp.embWeight[dm.go_id].repeat(batch_size, 1)
+		first_emb = inp.embLayer(LongTensor([dm.go_id])).repeat(batch_size, 1)
 		gen.w_pro = []
 		gen.w_o = []
 		gen.emb = []
@@ -69,11 +90,11 @@ class GenNetwork(nn.Module):
 			gen.w_pro.append(w)
 			if mode == "max":
 				w_o = torch.argmax(w[:, self.start_generate_id:], dim=1) + self.start_generate_id
-				next_emb = inp.embWeight[w_o]
+				next_emb = inp.embLayer(w_o)
 			elif mode == "gumbel":
 				w_onehot, w_o = gumbel_max(w[:, self.start_generate_id:], 1, 1)
 				w_o = w_o + self.start_generate_id
-				next_emb = torch.sum(torch.unsqueeze(w_onehot, -1) * inp.embWeight[2:], 1)
+				next_emb = torch.sum(torch.unsqueeze(w_onehot, -1) * inp.embLayer.weight[2:], 1)
 			gen.w_o.append(w_o)
 			gen.emb.append(next_emb)
 
