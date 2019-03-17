@@ -7,6 +7,7 @@ import torch
 from torch import nn, optim
 import numpy as np
 
+from cotk.metric import LanguageGenerationRecorder
 from utils import Storage, cuda, BaseModel, SummaryHelper, get_mean, storage_to_list, \
 	CheckpointManager
 from network import Network
@@ -171,9 +172,9 @@ class LM(BaseModel):
 		res = metric1.close()
 
 		dm.restart(key, args.batch_size, shuffle=False)
-		metric2 = dm.get_inference_metric()
+		#metric2 = dm.get_inference_metric()
+		metric2 = LanguageGenerationRecorder(self, gen_key="gen")
 		while True:
-			logging.info("%d / %d", dm.batch_id, len(dm.index["test"]))
 			incoming = self.get_next_batch(dm, key, restart=False)
 			if incoming is None:
 				break
