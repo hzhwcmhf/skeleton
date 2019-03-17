@@ -54,9 +54,8 @@ class LM(BaseModel):
 	def _preprocess_batch(self, data):
 		incoming = Storage()
 		incoming.data = data = Storage(data)
-		data.batch_size = data.post.shape[0]
-		data.post = cuda(torch.LongTensor(data.post.transpose(1, 0))) # length * batch_size
-		data.resp = cuda(torch.LongTensor(data.resp.transpose(1, 0))) # length * batch_size
+		data.batch_size = data.sent.shape[0]
+		data.sent = cuda(torch.LongTensor(data.sent.transpose(1, 0))) # length * batch_size
 		return incoming
 
 	def get_next_batch(self, dm, key, restart=True, needhash=False):
@@ -165,8 +164,8 @@ class LM(BaseModel):
 				self.net.forward(incoming)
 				gen_prob = nn.functional.log_softmax(incoming.gen.w, -1)
 			data = incoming.data
-			data.resp = incoming.data.resp_allvocabs
-			data.resp_length = incoming.data.resp_length
+			data.sent = incoming.data.sent_allvocabs
+			data.sent_length = incoming.data.sent_length
 			data.gen_log_prob = gen_prob.detach().cpu().numpy().transpose(1, 0, 2)
 			metric1.forward(data)
 		res = metric1.close()
@@ -181,8 +180,7 @@ class LM(BaseModel):
 			with torch.no_grad():
 				self.net.detail_forward(incoming)
 			data = incoming.data
-			data.resp = incoming.data.resp_allvocabs
-			data.post = incoming.data.post_allvocabs
+			data.sent = incoming.data.sent_allvocabs
 			data.gen = incoming.gen.w_o.detach().cpu().numpy().transpose(1, 0)
 			metric2.forward(data)
 		res.update(metric2.close())
@@ -197,9 +195,8 @@ class LM(BaseModel):
 				if isinstance(value, float) or isinstance(value, bytes):
 					logging.info("\t{}:\t{}".format(key, value))
 					f.write("{}:\t{}\n".format(key, value))
-			for i in range(len(res['post'])):
-				f.write("post:\t%s\n" % " ".join(res['post'][i]))
-				f.write("resp:\t%s\n" % " ".join(res['resp'][i]))
+			for i in range(len(res['sent'])):
+				f.write("sent:\t%s\n" % " ".join(res['sent'][i]))
 				f.write("gen:\t%s\n" % " ".join(res['gen'][i]))
 			f.flush()
 		logging.info("result output to %s.", filename)
