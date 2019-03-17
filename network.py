@@ -4,7 +4,7 @@ import logging
 import torch
 from torch import nn
 
-from utils import zeros, LongTensor\
+from utils import zeros, LongTensor,\
 			BaseNetwork, MyGRU, Storage, gumbel_max, flattenSequence
 
 # pylint: disable=W0221
