@@ -124,7 +124,7 @@ class GenNetwork(nn.Module):
 	def detail_forward(self, incoming):
 		inp = Storage()
 		batch_size = inp.batch_size = incoming.data.batch_size
-		inp.embLayer = incoming.resp.embLayer
+		inp.embLayer = incoming.sent.embLayer
 
 		incoming.gen = gen = Storage()
 		self.freerun(inp, gen, 'gumbel')
