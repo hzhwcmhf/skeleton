@@ -72,7 +72,6 @@ def run():
 
 	args.batch_per_epoch = 1500
 	args.embedding_size = 300
-	args.eh_size = 200
 	args.dh_size = 200
 	args.lr = 1e-3
 	args.batch_size = 30
