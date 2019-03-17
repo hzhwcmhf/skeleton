@@ -197,8 +197,7 @@ class LM(BaseModel):
 				if isinstance(value, float) or isinstance(value, bytes):
 					logging.info("\t{}:\t{}".format(key, value))
 					f.write("{}:\t{}\n".format(key, value))
-			for i in range(len(res['sent'])):
-				f.write("sent:\t%s\n" % " ".join(res['sent'][i]))
+			for i in range(len(res['gen'])):
 				f.write("gen:\t%s\n" % " ".join(res['gen'][i]))
 			f.flush()
 		logging.info("result output to %s.", filename)
