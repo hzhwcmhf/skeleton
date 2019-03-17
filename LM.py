@@ -173,6 +173,7 @@ class LM(BaseModel):
 		dm.restart(key, args.batch_size, shuffle=False)
 		metric2 = dm.get_inference_metric()
 		while True:
+			logging.info("%d / %d", dm.batch_id['test'], dm.batch_size["test"])
 			incoming = self.get_next_batch(dm, key, restart=False)
 			if incoming is None:
 				break
