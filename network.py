@@ -50,7 +50,7 @@ class EmbeddingLayer(nn.Module):
 		output: sent
 		'''
 		incoming.sent = Storage()
-		incoming.sent.embedding = self.embLayer(incoming.data.resp)
+		incoming.sent.embedding = self.embLayer(incoming.data.sent)
 		incoming.sent.embLayer = self.embLayer
 
 class GenNetwork(nn.Module):
