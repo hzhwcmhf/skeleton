@@ -45,7 +45,7 @@ class GenNetwork(nn.Module):
 
 	def teacherForcing(self, inp, gen):
 		embedding = inp.embedding
-		length = inp.resp_length
+		length = inp.sent_length
 		gen.h, _ = self.GRULayer.forward(embedding, length-1, h_init=inp.init_h, need_h=True)
 		gen.w = self.wLinearLayer(gen.h)
 
@@ -89,15 +89,15 @@ class GenNetwork(nn.Module):
 
 	def forward(self, incoming):
 		inp = Storage()
-		inp.resp_length = incoming.data.resp_length
-		inp.embedding = incoming.resp.embedding
+		inp.sent_length = incoming.data.sent_length
+		inp.embedding = incoming.sent.embedding
 		inp.init_h = incoming.conn.init_h
 
 		incoming.gen = gen = Storage()
 		self.teacherForcing(inp, gen)
 
-		w_o_f = flattenSequence(gen.w, incoming.data.resp_length-1)
-		data_f = flattenSequence(incoming.data.resp[1:], incoming.data.resp_length-1)
+		w_o_f = flattenSequence(gen.w, incoming.data.sent_length-1)
+		data_f = flattenSequence(incoming.data.sent[1:], incoming.data.sent_length-1)
 		incoming.result.word_loss = self.lossCE(w_o_f, data_f)
 		incoming.result.perplexity = torch.exp(incoming.result.word_loss)
 
@@ -111,14 +111,11 @@ class GenNetwork(nn.Module):
 
 		dm = self.param.volatile.dm
 		w_o = gen.w_o.detach().cpu().numpy()
-		incoming.result.resp_str = resp_str = \
+		incoming.result.gen_str = gen_str = \
 				[" ".join(dm.index_to_sen(w_o[:, i].tolist())) for i in range(batch_size)]
 		incoming.result.golden_str = golden_str = \
-				[" ".join(dm.index_to_sen(incoming.data.resp[:, i].detach().cpu().numpy().tolist()))\
+				[" ".join(dm.index_to_sen(incoming.data.sent[:, i].detach().cpu().numpy().tolist()))\
 				for i in range(batch_size)]
-		incoming.result.post_str = post_str = \
-				[" ".join(dm.index_to_sen(incoming.data.post[:, i].detach().cpu().numpy().tolist()))\
-				for i in range(batch_size)]
-		incoming.result.show_str = "\n".join(["post: " + a + "\n" + "resp: " + b + "\n" + \
+		incoming.result.show_str = "\n".join(["gen: " + b + "\n" + \
 				"golden: " + c + "\n" \
-				for a, b, c in zip(post_str, resp_str, golden_str)])
+				for a, b, c in zip(gen_str, golden_str)])
